@@ -10,10 +10,18 @@ from mod.common.minecraftEnum import ItemPosType
 compFactory = serverApi.GetEngineCompFactory()
 itemComp = compFactory.CreateItem(serverApi.GetLevelId())
 
+# 缓存物品信息，避免重复调用API
 cachedItemInfos = {}
 
 
 def GetItemInfo(itemName, auxValue, isEnchanted=False):
+    """
+    获取物品的基本信息，并使用缓存来优化性能。
+    :param itemName: str, 物品ID
+    :param auxValue: int, 物品附加值
+    :param isEnchanted: bool, 是否为附魔书
+    :return: dict, 物品信息字典
+    """
     key = (itemName, auxValue, isEnchanted)
     if key in cachedItemInfos:
         return cachedItemInfos[key]
@@ -22,10 +30,15 @@ def GetItemInfo(itemName, auxValue, isEnchanted=False):
     return info
 
 
+# 缓存斧头类物品的判断结果
 axe_items_cache = {}
 
 
 def isAxe(itemName, auxValue=0):
+    """
+    判断一个物品是否为“斧头”。
+    同样使用了缓存来优化性能。
+    """
     if itemName in axe_items_cache:
         return axe_items_cache[itemName]
     info = GetItemInfo(itemName, auxValue)
@@ -36,6 +49,10 @@ def isAxe(itemName, auxValue=0):
     return False
 
 def is_same_itme_ignore_count(old, new):
+    """
+    比较两个物品字典，判断它们是否为同一种物品（忽略数量）。
+    除了比较ID和附加值，还会比较userData，以区分NBT不同的物品。
+    """
     if old["newAuxValue"] == new["newAuxValue"] and old["newItemName"] == new["newItemName"]:
         old_userData = old["userData"] if "userData" in old else None
         new_userData = new["userData"] if "userData" in new else None
@@ -45,12 +62,13 @@ def is_same_itme_ignore_count(old, new):
 
 
 def AddItemToPlayerInventory(playerId, spawnitem):
-    '''
-    给玩家背包发放物品，优先发放到背包，背包已满时，生成物品实体到脚下
-    :param playerId: 玩家id
-    :param spawnitem: 物品itemdict，count可以大于60
-    :return:
-    '''
+    """
+    向玩家背包中添加物品，提供比引擎原生接口更完善的功能。
+    它会自动处理堆叠、填充空位；如果背包已满，会自动将物品生成在玩家脚下。
+    :param playerId: str, 玩家ID
+    :param spawnitem: dict, 物品字典，数量(count)可以超过最大堆叠数
+    :return: bool, 恒为True
+    """
     itemName = spawnitem["newItemName"]
     auxValue = spawnitem["newAuxValue"]
     count = spawnitem['count'] if 'count' in spawnitem else 0
@@ -65,6 +83,7 @@ def AddItemToPlayerInventory(playerId, spawnitem):
     itemcomp = compFactory.CreateItem(playerId)
     playerInv = itemcomp.GetPlayerAllItems(ItemPosType.INVENTORY, True)
 
+    # 优先尝试堆叠到已有物品或空槽位
     for slotId, itemDict in enumerate(playerInv):
         if count > 0:
             if itemDict:
@@ -82,6 +101,7 @@ def AddItemToPlayerInventory(playerId, spawnitem):
                 count -= spawncount
         else:
             return True
+    # 如果背包已满，则在玩家位置生成掉落物
     while count > 0:
         spawncount = min(maxStackSize, count)
         itemDict = deepcopy(spawnitem)
@@ -95,6 +115,14 @@ def AddItemToPlayerInventory(playerId, spawnitem):
 
 
 def AddItemToContainer(chestpos, spawnitem, dimension=0):
+    """
+    向容器（如箱子）中添加物品。
+    此函数会先检查容器是否有足够空间，只有空间足够时才会执行添加操作。
+    :param chestpos: tuple, 容器的坐标(x, y, z)
+    :param spawnitem: dict, 要添加的物品字典
+    :param dimension: int, 容器所在的维度ID
+    :return: bool, 如果成功添加返回True，如果空间不足则返回False
+    """
     size = itemComp.GetContainerSize(chestpos, dimension)
     if size < 0:
         return False
@@ -109,6 +137,7 @@ def AddItemToContainer(chestpos, spawnitem, dimension=0):
     else:
         maxStackSize = 1
 
+    # 第一步：计算容器内总共还能放下多少目标物品
     totalcanspawn = 0
     canspawnslotlist = []
     for slotId in range(size):
@@ -125,9 +154,11 @@ def AddItemToContainer(chestpos, spawnitem, dimension=0):
                 canspawnslotlist.append([slotId, maxStackSize])
         else:
             break
+    # 如果总空间不足，直接返回失败
     if totalcanspawn < count:
         return False
 
+    # 第二步：如果空间足够，则执行添加操作
     spawnResult = False
     for slotId, canspawncount in canspawnslotlist:
         if count > 0:

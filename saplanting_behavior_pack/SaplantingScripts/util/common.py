@@ -5,6 +5,10 @@ from random import random
 
 
 class Singleton(type):
+    """
+    单例模式的元类实现。
+    任何将此类作为元类的类，在整个程序生命周期中都只会创建一个实例。
+    """
     _instances = {}
 
     def __call__(cls, *args, **kwargs):
@@ -14,6 +18,11 @@ class Singleton(type):
 
 
 def dealunicode(_instance):
+    """
+    递归处理数据结构中的unicode字符串，将其编码为utf-8。
+    这在处理从外部（如json文件）读取的数据时非常有用，可以避免编码问题。
+    支持处理列表、字典、元组、集合等多种数据结构。
+    """
     if isinstance(_instance, unicode):
         return _instance.encode('utf8')
     elif isinstance(_instance, list):
@@ -38,7 +47,8 @@ def dealunicode(_instance):
 def update_dict(old, new):
     # type: (dict, dict) -> dict
     """
-    更新dict，把new更新到old里
+    递归地将`new`字典中的内容更新到`old`字典中。
+    与dict.update()不同，如果键的值是字典，它会合并子字典而不是直接覆盖。
     """
     for key in new:
         if key in old:
@@ -52,7 +62,9 @@ def update_dict(old, new):
 def filling_dict(config, default):
     # type: (dict, dict) -> dict
     """
-    根据default对config查漏补缺
+    根据`default`字典，为`config`字典补充缺失的键值对。
+    此函数会递归检查，确保`config`拥有`default`中所有的键。
+    常用于加载配置后，用默认配置来补全可能缺失的选项。
     """
     for key in default:
         if key not in config:
@@ -64,16 +76,25 @@ def filling_dict(config, default):
 
 
 def get_float_color(r, g, b):
+    """将0-255范围的RGB颜色值转换为0.0-1.0范围的浮点数颜色值。"""
     return r / 255.0, g / 255.0, b / 255.0, 1.0
 
 
 def get_gradient_color(start_color, end_color, progress):
+    """
+    根据进度值，计算在起始颜色和结束颜色之间的渐变色。
+    :param start_color: tuple, 起始颜色 (r, g, b)
+    :param end_color: tuple, 结束颜色 (r, g, b)
+    :param progress: float, 进度 (0.0 到 1.0)
+    :return: tuple, 计算出的中间颜色 (r, g, b)
+    """
     if start_color == end_color:
         return start_color
     return tuple(int(d[0] + (d[1] - d[0]) * progress) for d in zip(start_color, end_color))
 
 
 def isRectangleOverlap(rec1, rec2):
+    """检查两个矩形是否重叠（AABB碰撞检测）。"""
     def intersect(p_left, p_right, q_left, q_right):
         return min(p_right, q_right) > max(p_left, q_left)
 
@@ -81,6 +102,7 @@ def isRectangleOverlap(rec1, rec2):
 
 
 def intToRoman(num):
+    """将整数转换为罗马数字字符串。"""
     num = int(num)
     values = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1]
     numerals = ["M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"]
@@ -93,6 +115,10 @@ def intToRoman(num):
 
 
 def randomFloatToInt(num):
+    """
+    将浮点数转换为整数，并根据小数部分进行随机取整。
+    例如，4.7有70%的概率变为5，30%的概率变为4。
+    """
     numInt = int(num)
     left = num - numInt
     if left > 0:
@@ -102,10 +128,18 @@ def randomFloatToInt(num):
 
 
 def get_block_pos(pos):
+    """将浮点数坐标（实体坐标）转换为整数坐标（方块坐标）。"""
     return int(floor(pos[0])), int(floor(pos[1])), int(floor(pos[2]))
 
 
 def reformat_item(item, pop=False):
+    """
+    格式化和清理从引擎获取的物品字典。
+    引擎返回的物品信息可能包含很多瞬时或不必要的数据，此函数用于提取核心数据。
+    :param item: dict, 原始物品字典
+    :param pop: bool, 如果为True，则在原字典上删除多余键；否则，创建一个新的干净字典。
+    :return: dict, 格式化后的物品字典
+    """
     if item:
         if pop:
             if 'userData' in item:
