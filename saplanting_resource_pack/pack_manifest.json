@@ -1,0 +1,30 @@
+{
+  "modules": [
+    {
+      "description": "Saplanting",
+      "type": "resources",
+      "uuid": "674731e3-2340-43ca-b00f-e5096c02ce6a",
+      "version": [
+        0,
+        0,
+        1
+      ]
+    }
+  ],
+  "header": {
+    "description": "Saplanting",
+    "name": "Saplanting",
+    "uuid": "f5f2b1b3-d102-4272-86f6-036e8e2671f1",
+    "version": [
+      0,
+      0,
+      3
+    ],
+    "min_engine_version": [
+      1,
+      18,
+      0
+    ]
+  },
+  "format_version": 1
+}

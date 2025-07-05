@@ -1,0 +1,6 @@
+gui.saplanting.server.min_wait_time.name=落地生根最小等待时间(秒)
+gui.saplanting.server.tree_felling.name=允许连锁砍树
+gui.quick_suit.client.tree_felling.name=连锁砍树(§c树屋小心！§r)
+gui.saplanting.server.check_leave_persistent_bit.name=检查天然树叶(开启时,必须有天然树叶才连锁)
+gui.saplanting.server.tree_felling_limit_count.name=连锁数量限制
+gui.saplanting.reset.name=重置设置
